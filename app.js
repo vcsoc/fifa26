@@ -131,6 +131,7 @@ let visibleMatchIds = new Set();
 let upcomingMatchIds = [];
 let activeMatchIds = [];
 let expandedMatchId = "";
+let hoveredMatchId = "";
 let focusedMatchId = "";
 let focusedMatchTimer = null;
 let headerTicking = false;
@@ -138,6 +139,7 @@ let headerIsCompact = false;
 let statsMode = false;
 let floatingFixture = null;
 let floatingFixtureTimer = null;
+let hoverExpandTimer = null;
 let suppressFloatingUntil = 0;
 
 function normalizeCountry(value) {
@@ -511,7 +513,7 @@ function fixtureMarkup(match, variant = "full") {
   const isActive = activeMatchIds.includes(match.id);
   const activeBadge = isActive ? '<span class="live-badge">Live</span>' : "";
   const upcomingBadge = upcomingIndex >= 0 ? `<span class="upcoming-badge">Next ${upcomingIndex + 1}</span>` : "";
-  const classNames = ["fixture", `fixture-${variant}`, (focusedMatchId === match.id || expandedMatchId === match.id) ? "force-expanded" : "", isActive ? "fixture-live" : "", upcomingIndex >= 0 ? `upcoming-${upcomingIndex + 1}` : ""].filter(Boolean).join(" ");
+  const classNames = ["fixture", `fixture-${variant}`, (focusedMatchId === match.id || expandedMatchId === match.id || hoveredMatchId === match.id) ? "force-expanded" : "", isActive ? "fixture-live" : "", upcomingIndex >= 0 ? `upcoming-${upcomingIndex + 1}` : ""].filter(Boolean).join(" ");
   const showPoints = variant === "full" || variant === "final";
   return `
     <article class="${classNames}" data-match-id="${match.id}"${hidden}>
@@ -910,6 +912,26 @@ function handleInput(event) {
   if (flag) flag.textContent = toFlagEmoji(event.target.value);
 }
 
+function setHoveredMatch(matchId) {
+  hoveredMatchId = matchId;
+  const fixture = document.querySelector(`.fixture[data-match-id="${matchId}"]`);
+  if (!fixture) return;
+  fixture.classList.add('force-expanded');
+  if (fixture.classList.contains('fixture-group')) {
+    activateFloatingFixture(fixture);
+  }
+}
+
+function clearHoveredMatch(matchId = hoveredMatchId) {
+  if (!hoveredMatchId || hoveredMatchId !== matchId) return;
+  const fixture = document.querySelector(`.fixture[data-match-id="${matchId}"]`);
+  if (fixture && expandedMatchId !== matchId && focusedMatchId !== matchId) {
+    fixture.classList.remove('force-expanded');
+  }
+  hoveredMatchId = "";
+  if (!expandedMatchId && !focusedMatchId) deactivateFloatingFixture();
+}
+
 function activateFloatingFixture(fixture) {
   if (!fixture?.classList.contains('fixture-group')) return;
   deactivateFloatingFixture();
@@ -977,7 +999,15 @@ function handleFixtureHoverOut(event) {
 }
 
 function suppressFloatingPopouts() {
-  suppressFloatingUntil = Date.now() + 350;
+  suppressFloatingUntil = Date.now() + 700;
+  if (hoverExpandTimer) {
+    clearTimeout(hoverExpandTimer);
+    hoverExpandTimer = null;
+  }
+  if (hoveredMatchId && !expandedMatchId && !focusedMatchId) {
+    const hovered = hoveredMatchId;
+    clearHoveredMatch(hovered);
+  }
   deactivateFloatingFixture();
 }
 
@@ -1036,12 +1066,17 @@ function handleJumpClick(event) {
 }
 
 function closeExpandedMatch() {
-  if (!expandedMatchId && !focusedMatchId && !floatingFixture) return;
+  if (!expandedMatchId && !hoveredMatchId && !focusedMatchId && !floatingFixture) return;
   expandedMatchId = "";
+  hoveredMatchId = "";
   focusedMatchId = "";
   if (focusedMatchTimer) {
     clearTimeout(focusedMatchTimer);
     focusedMatchTimer = null;
+  }
+  if (hoverExpandTimer) {
+    clearTimeout(hoverExpandTimer);
+    hoverExpandTimer = null;
   }
   deactivateFloatingFixture();
   render();
@@ -1173,6 +1208,30 @@ document.addEventListener("click", handleJumpClick);
 document.addEventListener("click", handleOutsideClick);
 document.addEventListener("keydown", handleEscapeKey);
 document.addEventListener("input", handleInput);
+document.addEventListener('mouseover', (event) => {
+  const fixture = event.target.closest('.fixture[data-match-id]');
+  if (!fixture || fixture.contains(event.relatedTarget)) return;
+  if (Date.now() < suppressFloatingUntil) return;
+  const matchId = fixture.dataset.matchId;
+  const isSidePanel = Boolean(fixture.closest('#groups-left, #groups-right'));
+  const delay = isSidePanel ? 520 : 260;
+  if (hoverExpandTimer) clearTimeout(hoverExpandTimer);
+  hoverExpandTimer = setTimeout(() => {
+    setHoveredMatch(matchId);
+    hoverExpandTimer = null;
+  }, delay);
+});
+document.addEventListener('mouseout', (event) => {
+  const fixture = event.target.closest('.fixture[data-match-id]');
+  if (!fixture) return;
+  if (fixture.contains(event.relatedTarget)) return;
+  const matchId = fixture.dataset.matchId;
+  if (hoverExpandTimer) {
+    clearTimeout(hoverExpandTimer);
+    hoverExpandTimer = null;
+  }
+  clearHoveredMatch(matchId);
+});
 document.addEventListener("scroll", (event) => {
   if (event.target?.closest?.('.groups-scroll')) suppressFloatingPopouts();
 }, true);

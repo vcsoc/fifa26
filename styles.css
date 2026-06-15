@@ -443,18 +443,19 @@ body.scrolled .compact-toolbar select {
   width: 100%;
 }
 
-.fixture-node:hover > .fixture-group,
-.fixture-node:hover > .fixture-knockout,
-.fixture-node:hover > .fixture-third {
+.fixture-node > .fixture.force-expanded,
+.fixture-node > .fixture-group.floating-popout {
   position: absolute;
   top: 0;
   left: 0;
 }
 
-#groups-right .fixture-node:hover > .fixture-group,
-.bracket-side.right .fixture-node:hover > .fixture-knockout,
-.bracket-side.right .fixture-node:hover > .fixture-third,
-.center-column .semi-right:hover > .fixture-knockout {
+#groups-right .fixture-node > .fixture.force-expanded,
+#groups-right .fixture-node > .fixture-group.floating-popout,
+.bracket-side.right .fixture-node > .fixture.force-expanded,
+.bracket-side.right .fixture-node > .fixture-knockout.force-expanded,
+.bracket-side.right .fixture-node > .fixture-third.force-expanded,
+.center-column .semi-right .fixture-knockout.force-expanded {
   left: auto;
   right: 0;
 }
