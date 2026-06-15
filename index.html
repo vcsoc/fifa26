@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FIFA 2026 Family Scoreboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="poster-shell">
+      <header class="control-bar card">
+        <div class="control-meta">
+          <div class="brand-row">
+            <span class="brand">FIFA 2026 Scorecard</span>
+            <span class="host-pill">Canada · Mexico · USA</span>
+            <div id="match-jumps" class="match-jumps"></div>
+          </div>
+          <div class="toolbar-grid compact-toolbar">
+            <label>
+              <span class="label-mini">Search</span>
+              <input id="search-input" type="search" placeholder="Country, stage, city, or match #" title="Filter fixtures by country, stage, city, or match number" />
+            </label>
+            <label>
+              <span class="label-mini">Stage</span>
+              <select id="stage-filter" title="Show only fixtures from one tournament stage">
+                <option value="all">All stages</option>
+              </select>
+            </label>
+            <label>
+              <span class="label-mini">Status</span>
+              <select id="status-filter" title="Filter by manual edits, auto-sync, or pending fixtures">
+                <option value="all">All matches</option>
+                <option value="manual">Updated by us</option>
+                <option value="auto">Auto updated</option>
+                <option value="pending">Not updated yet</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="topbar-meta">
+            <p id="summary-text" class="summary"></p>
+            <p id="last-sync-text" class="sync-text">Not yet synced with ESPN.</p>
+          </div>
+          <div class="hero-actions">
+            <button id="theme-toggle-btn" class="secondary" type="button" title="Switch between light and dark themes">Dark theme</button>
+            <button id="stats-toggle-btn" class="secondary" type="button" title="Toggle between the scorecard and statistics overview">Stats view</button>
+            <button id="auto-update-btn" class="primary" type="button" title="Fetch live FIFA 2026 results from ESPN and update untouched fixtures">Auto Update</button>
+            <button id="reset-btn" class="secondary" type="button" title="Reset all local changes and browser-saved history for this scoreboard">Reset</button>
+            <button id="export-btn" class="secondary" type="button" title="Download all fixtures and change history as JSON">Export</button>
+          </div>
+        </div>
+      </header>
+
+      <section id="scorecard-view" class="poster-layout">
+        <aside class="groups-column"><div id="groups-left" class="groups-scroll"></div></aside>
+
+        <section class="bracket-zone">
+          <div class="poster-title">
+            <div class="poster-wordmark">World Cup</div>
+            <div class="poster-year">2026</div>
+          </div>
+          <div id="knockout-bracket" class="knockout-board"></div>
+        </section>
+
+        <aside class="groups-column"><div id="groups-right" class="groups-scroll"></div></aside>
+      </section>
+
+      <section id="stats-view" class="stats-view card"></section>
+
+      <section class="history-panel card">
+        <div class="history-header">
+          <div>
+            <h2>Change History</h2>
+            <p class="history-copy">Recent manual edits and ESPN sync updates.</p>
+          </div>
+          <span id="history-count" class="pill">0</span>
+        </div>
+        <div id="history-list" class="history-list"></div>
+      </section>
+    </main>
+
+    <datalist id="country-options"></datalist>
+    <script src="app.js"></script>
+  </body>
+</html>
