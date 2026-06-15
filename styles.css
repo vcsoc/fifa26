@@ -295,17 +295,24 @@ body.scrolled .compact-toolbar select {
   position: sticky;
   top: 5.7rem;
   z-index: 1;
-  height: calc(100vh - 6.2rem);
+  height: calc(100dvh - 6.2rem);
   overflow: visible;
+  align-self: start;
 }
 
 .groups-scroll {
   display: grid;
+  align-content: start;
   gap: 0.52rem;
-  height: calc(100vh - 6.2rem);
-  overflow-y: auto;
+  block-size: calc(100dvh - 6.2rem);
+  max-block-size: calc(100dvh - 6.2rem);
+  overflow-y: scroll;
   overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
   width: 100%;
+  min-height: 0;
   padding-right: 0.18rem;
   padding-bottom: 0.5rem;
 }
