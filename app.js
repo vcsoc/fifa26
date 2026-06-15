@@ -136,6 +136,8 @@ let headerTicking = false;
 let headerIsCompact = false;
 let statsMode = false;
 let floatingFixture = null;
+let floatingFixtureTimer = null;
+let suppressFloatingUntil = 0;
 
 function normalizeCountry(value) {
   return String(value || "").trim().toLowerCase();
@@ -912,6 +914,10 @@ function activateFloatingFixture(fixture) {
 }
 
 function deactivateFloatingFixture() {
+  if (floatingFixtureTimer) {
+    clearTimeout(floatingFixtureTimer);
+    floatingFixtureTimer = null;
+  }
   if (!floatingFixture) return;
   floatingFixture.classList.remove('floating-popout');
   floatingFixture.style.position = '';
@@ -928,14 +934,28 @@ function handleFixtureHoverIn(event) {
   const fixture = event.target.closest('.fixture-group');
   if (!fixture) return;
   if (!fixture.closest('#groups-left, #groups-right')) return;
-  activateFloatingFixture(fixture);
+  if (Date.now() < suppressFloatingUntil) return;
+  if (floatingFixtureTimer) clearTimeout(floatingFixtureTimer);
+  floatingFixtureTimer = setTimeout(() => {
+    activateFloatingFixture(fixture);
+    floatingFixtureTimer = null;
+  }, 180);
 }
 
 function handleFixtureHoverOut(event) {
   const fixture = event.target.closest('.fixture-group');
   if (!fixture) return;
   if (fixture.contains(event.relatedTarget)) return;
+  if (floatingFixtureTimer) {
+    clearTimeout(floatingFixtureTimer);
+    floatingFixtureTimer = null;
+  }
   if (floatingFixture === fixture) deactivateFloatingFixture();
+}
+
+function suppressFloatingPopouts() {
+  suppressFloatingUntil = Date.now() + 350;
+  deactivateFloatingFixture();
 }
 
 function jumpToMatch(matchId) {
@@ -1070,11 +1090,15 @@ elements.export.addEventListener("click", exportChanges);
 elements.themeToggle.addEventListener("click", toggleTheme);
 elements.statsToggle.addEventListener("click", toggleStatsMode);
 window.addEventListener("scroll", updateHeaderState, { passive: true });
+window.addEventListener("wheel", suppressFloatingPopouts, { passive: true });
 document.addEventListener("click", handleFixtureClick);
 document.addEventListener("click", handleJumpClick);
 document.addEventListener("input", handleInput);
 document.addEventListener("mouseover", handleFixtureHoverIn);
 document.addEventListener("mouseout", handleFixtureHoverOut);
+document.addEventListener("scroll", (event) => {
+  if (event.target?.closest?.('.groups-scroll')) suppressFloatingPopouts();
+}, true);
 
 initializeTheme();
 populateCountryOptions();

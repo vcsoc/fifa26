@@ -792,7 +792,8 @@ body[data-theme="dark"] .fixture-group.floating-popout {
 }
 .fixture-group:hover .fixture-header,
 .fixture-knockout:hover .fixture-header,
-.fixture.force-expanded .fixture-header {
+.fixture.force-expanded .fixture-header,
+.fixture-group.floating-popout .fixture-header {
   min-height: 34px;
   max-height: 56px;
   padding-top: 0.32rem;
@@ -825,7 +826,11 @@ body[data-theme="dark"] .fixture-group.floating-popout {
 .fixture.force-expanded .match-meta,
 .fixture.force-expanded .fixture-actions,
 .fixture.force-expanded .fixture-updated,
-.fixture.force-expanded .points-row {
+.fixture.force-expanded .points-row,
+.fixture-group.floating-popout .match-meta,
+.fixture-group.floating-popout .fixture-actions,
+.fixture-group.floating-popout .fixture-updated,
+.fixture-group.floating-popout .points-row {
   max-height: 220px;
   opacity: 1;
   pointer-events: auto;
@@ -875,12 +880,20 @@ body[data-theme="dark"] .fixture-group.floating-popout {
 }
 
 #groups-left .fixture-group:hover,
-#groups-right .fixture-group:hover,
+#groups-right .fixture-group:hover {
+  width: 100%;
+  max-width: none;
+  transform: none;
+  z-index: 1;
+}
+
 #groups-left .fixture-group.force-expanded,
 #groups-right .fixture-group.force-expanded,
 .fixture-group.floating-popout {
   width: 300px;
   max-width: 300px;
+  transform: scale(1.08);
+  z-index: 99999;
 }
 
 .center-column .semi-left .fixture-knockout:hover,
