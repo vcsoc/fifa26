@@ -130,6 +130,7 @@ let lastSyncAt = localStorage.getItem(LAST_SYNC_KEY) || "";
 let visibleMatchIds = new Set();
 let upcomingMatchIds = [];
 let activeMatchIds = [];
+let expandedMatchId = "";
 let focusedMatchId = "";
 let focusedMatchTimer = null;
 let headerTicking = false;
@@ -510,7 +511,7 @@ function fixtureMarkup(match, variant = "full") {
   const isActive = activeMatchIds.includes(match.id);
   const activeBadge = isActive ? '<span class="live-badge">Live</span>' : "";
   const upcomingBadge = upcomingIndex >= 0 ? `<span class="upcoming-badge">Next ${upcomingIndex + 1}</span>` : "";
-  const classNames = ["fixture", `fixture-${variant}`, focusedMatchId === match.id ? "force-expanded" : "", isActive ? "fixture-live" : "", upcomingIndex >= 0 ? `upcoming-${upcomingIndex + 1}` : ""].filter(Boolean).join(" ");
+  const classNames = ["fixture", `fixture-${variant}`, (focusedMatchId === match.id || expandedMatchId === match.id) ? "force-expanded" : "", isActive ? "fixture-live" : "", upcomingIndex >= 0 ? `upcoming-${upcomingIndex + 1}` : ""].filter(Boolean).join(" ");
   const showPoints = variant === "full" || variant === "final";
   return `
     <article class="${classNames}" data-match-id="${match.id}"${hidden}>
@@ -861,6 +862,18 @@ function getFixtureValues(fixture) {
   };
 }
 
+function toggleExpandedMatch(matchId) {
+  expandedMatchId = expandedMatchId === matchId ? "" : matchId;
+  deactivateFloatingFixture();
+  render();
+
+  if (!expandedMatchId) return;
+  requestAnimationFrame(() => {
+    const fixture = document.querySelector(`.fixture[data-match-id="${matchId}"]`);
+    if (fixture?.classList.contains('fixture-group')) activateFloatingFixture(fixture);
+  });
+}
+
 function handleFixtureClick(event) {
   const fixture = event.target.closest('.fixture[data-match-id]');
   if (!fixture) return;
@@ -873,6 +886,7 @@ function handleFixtureClick(event) {
     const points2 = fixture.querySelector('[data-field="awayPoints"]');
     if (points1) points1.value = points.homePoints;
     if (points2) points2.value = points.awayPoints;
+    return;
   }
 
   if (event.target.classList.contains('save-btn')) {
@@ -881,7 +895,12 @@ function handleFixtureClick(event) {
       Object.assign(values, computePoints(values.homeScore, values.awayScore));
     }
     updateMatch(matchId, values, "manual");
+    expandedMatchId = matchId;
+    return;
   }
+
+  if (event.target.closest('input, select, button')) return;
+  toggleExpandedMatch(matchId);
 }
 
 function handleInput(event) {
@@ -897,6 +916,8 @@ function activateFloatingFixture(fixture) {
 
   const rect = fixture.getBoundingClientRect();
   const isRight = Boolean(fixture.closest('#groups-right'));
+  const fixtureNode = fixture.closest('.fixture-node');
+  if (fixtureNode) fixtureNode.style.zIndex = '130000';
   fixture.classList.add('floating-popout');
   fixture.style.position = 'fixed';
   fixture.style.top = `${Math.max(8, rect.top)}px`;
@@ -919,6 +940,8 @@ function deactivateFloatingFixture() {
     floatingFixtureTimer = null;
   }
   if (!floatingFixture) return;
+  const fixtureNode = floatingFixture.closest('.fixture-node');
+  if (fixtureNode) fixtureNode.style.zIndex = '';
   floatingFixture.classList.remove('floating-popout');
   floatingFixture.style.position = '';
   floatingFixture.style.top = '';
@@ -963,13 +986,45 @@ function jumpToMatch(matchId) {
   render();
 
   requestAnimationFrame(() => {
-    const fixture = document.querySelector(`.fixture[data-match-id="${matchId}"]`);
-    fixture?.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+    const target = document.querySelector(`.fixture[data-match-id="${matchId}"]`);
+    if (!target) return;
+
+    const sideScroller = target.closest('.groups-scroll');
+    const fixtureNode = target.closest('.fixture-node') || target;
+
+    if (sideScroller) {
+      const top = Math.max(0, fixtureNode.offsetTop - sideScroller.clientHeight / 2 + fixtureNode.clientHeight / 2);
+      sideScroller.scrollTo({ top, behavior: 'smooth' });
+
+      let settleTimer = null;
+      const promote = () => {
+        const refreshed = document.querySelector(`.fixture[data-match-id="${matchId}"]`);
+        if (refreshed?.classList.contains('fixture-group')) activateFloatingFixture(refreshed);
+      };
+
+      const onScroll = () => {
+        if (settleTimer) clearTimeout(settleTimer);
+        settleTimer = setTimeout(() => {
+          sideScroller.removeEventListener('scroll', onScroll);
+          promote();
+        }, 120);
+      };
+
+      sideScroller.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    } else {
+      fixtureNode.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+      setTimeout(() => {
+        const refreshed = document.querySelector(`.fixture[data-match-id="${matchId}"]`);
+        if (refreshed?.classList.contains('fixture-group')) activateFloatingFixture(refreshed);
+      }, 180);
+    }
   });
 
   if (focusedMatchTimer) clearTimeout(focusedMatchTimer);
   focusedMatchTimer = setTimeout(() => {
     focusedMatchId = "";
+    deactivateFloatingFixture();
     render();
   }, 5000);
 }
@@ -978,6 +1033,28 @@ function handleJumpClick(event) {
   const button = event.target.closest('[data-match-jump]');
   if (!button) return;
   jumpToMatch(button.dataset.matchJump);
+}
+
+function closeExpandedMatch() {
+  if (!expandedMatchId && !focusedMatchId && !floatingFixture) return;
+  expandedMatchId = "";
+  focusedMatchId = "";
+  if (focusedMatchTimer) {
+    clearTimeout(focusedMatchTimer);
+    focusedMatchTimer = null;
+  }
+  deactivateFloatingFixture();
+  render();
+}
+
+function handleOutsideClick(event) {
+  if (event.target.closest('.fixture[data-match-id], [data-match-jump], .hero-actions button, .compact-toolbar')) return;
+  closeExpandedMatch();
+}
+
+function handleEscapeKey(event) {
+  if (event.key !== 'Escape') return;
+  closeExpandedMatch();
 }
 
 function applyTheme(theme) {
@@ -1093,9 +1170,9 @@ window.addEventListener("scroll", updateHeaderState, { passive: true });
 window.addEventListener("wheel", suppressFloatingPopouts, { passive: true });
 document.addEventListener("click", handleFixtureClick);
 document.addEventListener("click", handleJumpClick);
+document.addEventListener("click", handleOutsideClick);
+document.addEventListener("keydown", handleEscapeKey);
 document.addEventListener("input", handleInput);
-document.addEventListener("mouseover", handleFixtureHoverIn);
-document.addEventListener("mouseout", handleFixtureHoverOut);
 document.addEventListener("scroll", (event) => {
   if (event.target?.closest?.('.groups-scroll')) suppressFloatingPopouts();
 }, true);

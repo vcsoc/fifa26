@@ -729,12 +729,8 @@ body[data-theme="dark"] .fixture.force-expanded {
   z-index: 1;
   overflow: visible;
 }
-.fixture-group:hover,
-.fixture-knockout:hover,
-.fixture-third:hover,
 .fixture.force-expanded,
-.third-place-wrap:hover .fixture-third,
-.semi-node:hover .fixture-knockout {
+.fixture-group.floating-popout {
   transform: scale(1.08);
   z-index: 99999;
 }
@@ -764,19 +760,16 @@ body[data-theme="dark"] .fixture-group.floating-popout {
   transform-origin: center center;
 }
 
-.center-column .semi-left .fixture-knockout:hover,
-.center-column .semi-left:hover .fixture-knockout {
+.center-column .semi-left .fixture-knockout.force-expanded {
   left: 0;
 }
 
-.center-column .semi-right .fixture-knockout:hover,
-.center-column .semi-right:hover .fixture-knockout {
+.center-column .semi-right .fixture-knockout.force-expanded {
   right: 0;
   left: auto;
 }
 
-.center-column .third-place-wrap .fixture-third:hover,
-.center-column .third-place-wrap:hover .fixture-third {
+.center-column .third-place-wrap .fixture-third.force-expanded {
   left: 50%;
   right: auto;
   transform: translateX(-50%) scale(1.08);
@@ -790,8 +783,6 @@ body[data-theme="dark"] .fixture-group.floating-popout {
   opacity: 0;
   overflow: hidden;
 }
-.fixture-group:hover .fixture-header,
-.fixture-knockout:hover .fixture-header,
 .fixture.force-expanded .fixture-header,
 .fixture-group.floating-popout .fixture-header {
   min-height: 34px;
@@ -815,14 +806,6 @@ body[data-theme="dark"] .fixture-group.floating-popout {
   margin-bottom: 0;
   pointer-events: none;
 }
-.fixture-group:hover .match-meta,
-.fixture-group:hover .fixture-actions,
-.fixture-group:hover .fixture-updated,
-.fixture-knockout:hover .match-meta,
-.fixture-knockout:hover .fixture-actions,
-.fixture-knockout:hover .fixture-updated,
-.fixture-group:hover .points-row,
-.fixture-knockout:hover .points-row,
 .fixture.force-expanded .match-meta,
 .fixture.force-expanded .fixture-actions,
 .fixture.force-expanded .fixture-updated,
@@ -835,12 +818,12 @@ body[data-theme="dark"] .fixture-group.floating-popout {
   opacity: 1;
   pointer-events: auto;
 }
-.fixture-group:hover .match-meta,
-.fixture-knockout:hover .match-meta { margin-bottom: 0.35rem; }
-.fixture-group:hover .fixture-actions,
-.fixture-knockout:hover .fixture-actions { margin-top: 0.3rem; }
-.fixture-group:hover .fixture-updated,
-.fixture-knockout:hover .fixture-updated { margin-top: 0.3rem; }
+.fixture.force-expanded .match-meta,
+.fixture-group.floating-popout .match-meta { margin-bottom: 0.35rem; }
+.fixture.force-expanded .fixture-actions,
+.fixture-group.floating-popout .fixture-actions { margin-top: 0.3rem; }
+.fixture.force-expanded .fixture-updated,
+.fixture-group.floating-popout .fixture-updated { margin-top: 0.3rem; }
 .fixture-group .team-row,
 .fixture-knockout .team-row {
   grid-template-columns: 1.15rem minmax(0, 1fr) 2.2rem;
@@ -861,20 +844,20 @@ body[data-theme="dark"] .fixture-group.floating-popout {
   font-size: 0.58rem;
   border-radius: 5px;
 }
-.fixture-group:hover .team-row,
-.fixture-knockout:hover .team-row {
+.fixture.force-expanded .team-row,
+.fixture-group.floating-popout .team-row {
   grid-template-columns: 1.7rem minmax(0, 1fr) 3rem;
 }
-.fixture-group:hover .flag,
-.fixture-knockout:hover .flag {
+.fixture.force-expanded .flag,
+.fixture-group.floating-popout .flag {
   width: 1.7rem;
   height: 1.7rem;
   font-size: 0.92rem;
 }
-.fixture-group:hover .team-input,
-.fixture-group:hover .score-input,
-.fixture-knockout:hover .team-input,
-.fixture-knockout:hover .score-input {
+.fixture.force-expanded .team-input,
+.fixture.force-expanded .score-input,
+.fixture-group.floating-popout .team-input,
+.fixture-group.floating-popout .score-input {
   font-size: 0.74rem;
   padding: 0.32rem 0.38rem;
 }
@@ -902,9 +885,6 @@ body[data-theme="dark"] .fixture-group.floating-popout {
   max-width: 340px;
 }
 
-.bracket-side .fixture-knockout:hover,
-.center-column .fixture-knockout:hover,
-.center-column .fixture-third:hover,
 .bracket-side .fixture-knockout.force-expanded,
 .center-column .fixture-knockout.force-expanded,
 .center-column .fixture-third.force-expanded {
@@ -917,19 +897,21 @@ body[data-theme="dark"] .fixture-group.floating-popout {
   width: min(390px, 100%);
 }
 
-.bracket-side .fixture-knockout:hover .team-row,
-.center-column .fixture-knockout:hover .team-row,
-.center-column .fixture-third:hover .team-row,
-#groups-left .fixture-group:hover .team-row,
-#groups-right .fixture-group:hover .team-row {
+.bracket-side .fixture-knockout.force-expanded .team-row,
+.center-column .fixture-knockout.force-expanded .team-row,
+.center-column .fixture-third.force-expanded .team-row,
+#groups-left .fixture-group.force-expanded .team-row,
+#groups-right .fixture-group.force-expanded .team-row,
+.fixture-group.floating-popout .team-row {
   grid-template-columns: 1.7rem minmax(180px, 1fr) 3rem;
 }
 
-.bracket-side .fixture-knockout:hover .team-input,
-.center-column .fixture-knockout:hover .team-input,
-.center-column .fixture-third:hover .team-input,
-#groups-left .fixture-group:hover .team-input,
-#groups-right .fixture-group:hover .team-input {
+.bracket-side .fixture-knockout.force-expanded .team-input,
+.center-column .fixture-knockout.force-expanded .team-input,
+.center-column .fixture-third.force-expanded .team-input,
+#groups-left .fixture-group.force-expanded .team-input,
+#groups-right .fixture-group.force-expanded .team-input,
+.fixture-group.floating-popout .team-input {
   min-width: 180px;
 }
 
