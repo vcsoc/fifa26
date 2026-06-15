@@ -2,6 +2,9 @@
 
 A browser-based scoreboard for tracking FIFA 2026 matches together.
 
+
+![Screenshot](./screenshot.png)
+
 ## Features
 
 - Toronto, Ontario local kickoff times for all generated FIFA 2026 tournament matches
