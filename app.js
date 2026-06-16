@@ -2,7 +2,35 @@ const STORAGE_KEY = "fifa26-family-scoreboard-state-v1";
 const HISTORY_KEY = "fifa26-family-scoreboard-history-v1";
 const THEME_KEY = "fifa26-family-scoreboard-theme-v1";
 const LAST_SYNC_KEY = "fifa26-family-scoreboard-last-sync-v1";
+const TIMEZONE_KEY = "fifa26-family-scoreboard-timezone-v1";
 const TORONTO_TIMEZONE = "America/Toronto";
+const FALLBACK_TIMEZONES = [
+  "America/Toronto",
+  "America/Vancouver",
+  "America/Edmonton",
+  "America/Winnipeg",
+  "America/Halifax",
+  "America/St_Johns",
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Mexico_City",
+  "America/Sao_Paulo",
+  "Europe/London",
+  "Europe/Paris",
+  "Europe/Berlin",
+  "Europe/Madrid",
+  "Africa/Cairo",
+  "Asia/Dubai",
+  "Asia/Kolkata",
+  "Asia/Bangkok",
+  "Asia/Tokyo",
+  "Asia/Seoul",
+  "Australia/Sydney",
+  "Pacific/Auckland",
+  "UTC"
+];
 const GROUP_LABELS = "ABCDEFGHIJKL".split("");
 const KNOCKOUT_STAGES = ["Round of 32", "Round of 16", "Quarterfinal", "Semifinal", "Third Place"];
 const ESPN_SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?limit=200&dates=20260611-20260719";
@@ -99,6 +127,8 @@ const elements = {
   search: document.getElementById("search-input"),
   stage: document.getElementById("stage-filter"),
   status: document.getElementById("status-filter"),
+  timezone: document.getElementById("timezone-select"),
+  timezoneOptions: document.getElementById("timezone-options"),
   summary: document.getElementById("summary-text"),
   groupsLeft: document.getElementById("groups-left"),
   groupsRight: document.getElementById("groups-right"),
@@ -125,6 +155,7 @@ const elements = {
 let matches = loadMatches();
 let history = loadHistory();
 let lastSyncAt = localStorage.getItem(LAST_SYNC_KEY) || "";
+let selectedTimeZone = loadTimeZone();
 let visibleMatchIds = new Set();
 let upcomingMatchIds = [];
 let activeMatchIds = [];
@@ -210,18 +241,51 @@ function saveState() {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 500)));
 }
 
-function formatTorontoTime(iso) {
+function isValidTimeZone(value) {
+  try {
+    Intl.DateTimeFormat("en-CA", { timeZone: value }).format(new Date());
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function supportedTimeZones() {
+  if (typeof Intl.supportedValuesOf === "function") {
+    return Intl.supportedValuesOf("timeZone");
+  }
+  return FALLBACK_TIMEZONES;
+}
+
+function formatTimeZoneLabel(timeZone) {
+  return timeZone.replaceAll("_", " ");
+}
+
+function loadTimeZone() {
+  const saved = localStorage.getItem(TIMEZONE_KEY);
+  return isValidTimeZone(saved) ? saved : TORONTO_TIMEZONE;
+}
+
+function formatMatchTime(iso, timeZone = selectedTimeZone) {
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone: TORONTO_TIMEZONE,
+    timeZone,
     month: "short",
     day: "numeric",
     hour: "numeric",
-    minute: "2-digit"
+    minute: "2-digit",
+    timeZoneName: "short"
   }).format(new Date(iso));
 }
 
 function renderLastSync() {
-  elements.lastSync.textContent = lastSyncAt ? `Last synced from ESPN: ${formatTorontoTime(lastSyncAt)} Toronto time` : "Not yet synced with ESPN.";
+  elements.lastSync.textContent = lastSyncAt ? `Last synced from ESPN: ${formatMatchTime(lastSyncAt)} · ${formatTimeZoneLabel(selectedTimeZone)}` : "Not yet synced with ESPN.";
+}
+
+function populateTimezoneOptions() {
+  const zones = supportedTimeZones().filter((zone, index, list) => list.indexOf(zone) === index);
+  if (!zones.includes(TORONTO_TIMEZONE)) zones.unshift(TORONTO_TIMEZONE);
+  elements.timezoneOptions.innerHTML = zones.map((zone) => `<option value="${escapeHtml(zone)}"></option>`).join("");
+  elements.timezone.value = zones.includes(selectedTimeZone) ? selectedTimeZone : TORONTO_TIMEZONE;
 }
 
 function renderMatchJumps() {
@@ -540,7 +604,7 @@ function fixtureMarkup(match, variant = "full") {
         <div class="fixture-badges">${activeBadge}${upcomingBadge}<span class="status-badge ${status.className}">${status.label}</span></div>
       </div>
       <div class="fixture-body">
-        <p class="match-meta">${escapeHtml(match.city)} · ${escapeHtml(formatTorontoTime(match.kickoff))}</p>
+        <p class="match-meta">${escapeHtml(match.city)} · ${escapeHtml(formatMatchTime(match.kickoff))}</p>
         <div class="team-row">
           <span class="flag">${flagMarkup(match.homeTeam)}</span>
           <input class="team-input" data-field="homeTeam" list="country-options" value="${escapeHtml(match.homeTeam)}" placeholder="Country 1" autocomplete="country-name" spellcheck="false" title="Enter the first country for this fixture" />
@@ -562,7 +626,7 @@ function fixtureMarkup(match, variant = "full") {
           <button class="secondary points-btn" type="button" title="Auto-calculate points from the entered score. Win = 3, Draw = 1, Loss = 0">Points</button>
           <button class="primary save-btn" type="button" title="Save these countries, scores, and points to your browser">Save</button>
         </div>
-        <p class="fixture-updated">${match.lastUpdated ? `Updated ${escapeHtml(formatTorontoTime(match.lastUpdated))}` : "Not updated yet"}</p>
+        <p class="fixture-updated">${match.lastUpdated ? `Updated ${escapeHtml(formatMatchTime(match.lastUpdated))}` : "Not updated yet"}</p>
       </div>
     </article>
   `;
@@ -813,7 +877,7 @@ function renderStatsOverview() {
         ${played.length ? played.map((match) => `
           <article class="stats-card-item compact">
             <strong>Match ${match.number} · ${escapeHtml(match.stage)}</strong>
-            <small>${escapeHtml(match.city)} · ${escapeHtml(formatTorontoTime(match.kickoff))}</small>
+            <small>${escapeHtml(match.city)} · ${escapeHtml(formatMatchTime(match.kickoff))}</small>
             <div class="stats-scoreline small">
               <span>${inlineFlagMarkup(match.homeTeam)}${escapeHtml(match.homeTeam || "TBD")}</span>
               <strong>${escapeHtml(String(match.homeScore))} - ${escapeHtml(String(match.awayScore))}</strong>
@@ -836,7 +900,7 @@ function renderHistory() {
   elements.historyList.innerHTML = history.slice(0, 12).map((entry) => `
     <article class="history-item">
       <strong>Match ${entry.matchNumber} · ${escapeHtml(entry.stage)}</strong>
-      <small>${entry.source === "manual" ? "Saved by family" : "Auto Update"} · ${escapeHtml(formatTorontoTime(entry.timestamp))}</small>
+      <small>${entry.source === "manual" ? "Saved by family" : "Auto Update"} · ${escapeHtml(formatMatchTime(entry.timestamp))}</small>
       <div>${entry.changes.map((change) => `<div>${escapeHtml(labelForField(change.field))}: <strong>${escapeHtml(change.from || "—")}</strong> → <strong>${escapeHtml(change.to || "—")}</strong></div>`).join("")}</div>
     </article>
   `).join("");
@@ -1123,6 +1187,18 @@ function initializeTheme() {
   applyTheme(window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
 }
 
+function applyTimeZone(timeZone) {
+  selectedTimeZone = isValidTimeZone(timeZone) ? timeZone : TORONTO_TIMEZONE;
+  localStorage.setItem(TIMEZONE_KEY, selectedTimeZone);
+  if (elements.timezone) elements.timezone.value = selectedTimeZone;
+}
+
+function commitTimeZoneInput(rawValue) {
+  const value = String(rawValue || "").trim();
+  applyTimeZone(value || TORONTO_TIMEZONE);
+  render();
+}
+
 function toggleTheme() {
   applyTheme(elements.body.dataset.theme === "dark" ? "light" : "dark");
 }
@@ -1211,6 +1287,14 @@ function exportChanges() {
 elements.search.addEventListener("input", render);
 elements.stage.addEventListener("change", render);
 elements.status.addEventListener("change", render);
+elements.timezone.addEventListener("change", (event) => {
+  commitTimeZoneInput(event.target.value);
+});
+elements.timezone.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
+  commitTimeZoneInput(event.target.value);
+});
 elements.autoUpdate.addEventListener("click", runAutoUpdate);
 elements.reset.addEventListener("click", resetLocalChanges);
 elements.export.addEventListener("click", exportChanges);
@@ -1253,6 +1337,8 @@ document.addEventListener("scroll", (event) => {
 
 initializeTheme();
 populateCountryOptions();
+populateTimezoneOptions();
+applyTimeZone(selectedTimeZone);
 renderStageOptions();
 updateHeaderState();
 render();

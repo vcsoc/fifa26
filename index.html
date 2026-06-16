@@ -35,6 +35,10 @@
                 <option value="pending">Not updated yet</option>
               </select>
             </label>
+            <label>
+              <span class="label-mini">Timezone</span>
+              <input id="timezone-select" list="timezone-options" type="text" autocomplete="off" spellcheck="false" title="Choose the timezone used for all match times and update history" />
+            </label>
           </div>
         </div>
 
@@ -46,7 +50,7 @@
           <div class="hero-actions">
             <button id="theme-toggle-btn" class="secondary" type="button" title="Switch between light and dark themes">Dark theme</button>
             <button id="stats-toggle-btn" class="secondary" type="button" title="Toggle between the scorecard and statistics overview">Stats view</button>
-            <button id="auto-update-btn" class="primary" type="button" title="Fetch live FIFA 2026 results from ESPN and update untouched fixtures">Auto Update</button>
+            <button id="auto-update-btn" class="primary" type="button" title="Fetch the latest FIFA 2026 results from ESPN and update untouched fixtures right now">Update Now</button>
             <button id="reset-btn" class="secondary" type="button" title="Reset all local changes and browser-saved history for this scoreboard">Reset</button>
             <button id="export-btn" class="secondary" type="button" title="Download all fixtures and change history as JSON">Export</button>
           </div>
@@ -82,6 +86,7 @@
     </main>
 
     <datalist id="country-options"></datalist>
+    <datalist id="timezone-options"></datalist>
     <script src="app.js"></script>
   </body>
 </html>

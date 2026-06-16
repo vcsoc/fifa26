@@ -258,7 +258,7 @@ body.scrolled .hero-actions button {
 
 .toolbar-grid {
   display: grid;
-  grid-template-columns: minmax(0, 2.2fr) repeat(2, minmax(150px, 0.85fr));
+  grid-template-columns: minmax(0, 2.2fr) repeat(3, minmax(140px, 0.85fr));
   gap: 0.45rem;
 }
 .toolbar-grid label {
@@ -281,6 +281,10 @@ body.scrolled .compact-toolbar input,
 body.scrolled .compact-toolbar select {
   padding: 0.28rem 0.42rem;
   font-size: 0.6rem;
+}
+
+#timezone-select {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 .poster-layout {
