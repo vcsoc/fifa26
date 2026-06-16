@@ -19,13 +19,37 @@ A browser-based scoreboard for tracking FIFA 2026 matches together.
 
 Open `index.html` in a browser.
 
-For a local server:
+For a local server with Node.js:
 
-```bash
-npm start
-```
+1. Install Node.js
+   - Go to https://nodejs.org/
+   - Download the **LTS** version for your operating system
+   - Run the installer and keep the default options
+   - After installation, open a terminal and confirm it worked:
 
-Then visit `http://localhost:8000`.
+   ```bash
+   node -v
+   npm -v
+   ```
+
+2. Start the app
+   - Open a terminal in this project folder
+   - Run:
+
+   ```bash
+   npm start
+   ```
+
+3. Open the app in your browser
+
+   Visit `http://localhost:8000`.
+
+### Requirements
+
+- Node.js
+- A modern web browser
+
+No extra npm packages are required for this project.
 
 ## Notes
 
