@@ -8,10 +8,11 @@ A browser-based scoreboard for tracking FIFA 2026 matches together.
 ## Features
 
 - Toronto, Ontario local kickoff times for all generated FIFA 2026 tournament matches
+- Timezone selector so each user can view match times in their own timezone
 - Editable home/away country names with matching flag emoji
 - Final score and points entry for every match
 - Local change history tracking in the browser
-- Auto Update button that fills untouched past matches with automatic results
+- Update Now button that fills untouched past matches with automatic results
 - Search and filter tools for quick browsing
 - Export of the change log as JSON
 
@@ -51,8 +52,23 @@ For a local server with Node.js:
 
 No extra npm packages are required for this project.
 
+## GitHub Pages
+
+Live site:
+
+- https://vcsoc.github.io/fifa26/
+
+This project is configured to deploy to GitHub Pages using GitHub Actions.
+
+To enable it in your GitHub repository:
+
+1. Open the repository on GitHub
+2. Go to **Settings** → **Pages**
+3. Under **Build and deployment**, set **Source** to **GitHub Actions**
+4. Push to the `master` branch to trigger deployment
+
 ## Notes
 
 - Data is stored in `localStorage`, so your family updates stay on the same browser/device.
-- Auto Update only changes matches that have not been saved manually.
-- The schedule is generated in tournament order and shown in the `America/Toronto` timezone.
+- Update Now only changes matches that have not been saved manually.
+- The schedule is generated in tournament order and defaults to the `America/Toronto` timezone, but each user can change that in the top bar.
