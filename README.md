@@ -22,7 +22,7 @@ Open `index.html` in a browser.
 For a local server:
 
 ```bash
-python3 -m http.server 8000
+npm start
 ```
 
 Then visit `http://localhost:8000`.

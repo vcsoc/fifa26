@@ -6,12 +6,12 @@ const TORONTO_TIMEZONE = "America/Toronto";
 const GROUP_LABELS = "ABCDEFGHIJKL".split("");
 const KNOCKOUT_STAGES = ["Round of 32", "Round of 16", "Quarterfinal", "Semifinal", "Third Place"];
 const ESPN_SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?limit=200&dates=20260611-20260719";
-const SPECIAL_FLAG_EMOJIS = {
-  england: "🏴",
-  scotland: "🏴",
-  wales: "🏴",
-  "northern ireland": "🇬🇧",
-  kosovo: "🇽🇰"
+const SPECIAL_FLAG_URLS = {
+  england: "https://upload.wikimedia.org/wikipedia/en/b/be/Flag_of_England.svg",
+  scotland: "https://upload.wikimedia.org/wikipedia/commons/1/10/Flag_of_Scotland.svg",
+  wales: "https://upload.wikimedia.org/wikipedia/commons/d/dc/Flag_of_Wales.svg",
+  "northern ireland": "https://flagcdn.com/gb.svg",
+  kosovo: "https://flagcdn.com/xk.svg"
 };
 const COUNTRY_DATA = [
   ["Afghanistan", "AF"], ["Albania", "AL"], ["Algeria", "DZ"], ["American Samoa", "AS"], ["Andorra", "AD"],
@@ -71,9 +71,7 @@ const COUNTRY_ALIASES = {
   "north korea": "Korea DPR",
   iran: "Iran",
   "ivory coast": "Ivory Coast",
-  "cote d'ivoire": "Ivory Coast",
-  "côte d’ivoire": "Ivory Coast",
-  "côte d'ivoire": "Ivory Coast",
+  "cote d ivoire": "Ivory Coast",
   turkey: "Türkiye",
   "czech republic": "Czechia",
   ireland: "Republic of Ireland",
@@ -143,7 +141,13 @@ let hoverExpandTimer = null;
 let suppressFloatingUntil = 0;
 
 function normalizeCountry(value) {
-  return String(value || "").trim().toLowerCase();
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[’']/g, " ")
+    .replace(/[^a-zA-Z0-9]+/g, " ")
+    .trim()
+    .toLowerCase();
 }
 
 function buildDefaultMatches() {
@@ -252,13 +256,24 @@ function countryCodeFor(value) {
   return COUNTRY_MAP[normalized]?.code || "";
 }
 
-function toFlagEmoji(country) {
+function flagUrlFor(country) {
   const normalized = normalizeCountry(country);
-  if (!normalized) return "🏳️";
-  if (SPECIAL_FLAG_EMOJIS[normalized]) return SPECIAL_FLAG_EMOJIS[normalized];
-  const code = countryCodeFor(country);
-  if (!/^[A-Z]{2}$/.test(code)) return "🏳️";
-  return String.fromCodePoint(...code.split("").map((char) => 127397 + char.charCodeAt(0)));
+  if (!normalized) return "";
+  if (SPECIAL_FLAG_URLS[normalized]) return SPECIAL_FLAG_URLS[normalized];
+  const code = countryCodeFor(country).toLowerCase();
+  return /^[a-z]{2}$/.test(code) ? `https://flagcdn.com/${code}.svg` : "";
+}
+
+function flagMarkup(country) {
+  const url = flagUrlFor(country);
+  const label = canonicalizeCountryName(country) || "Unknown country";
+  return url
+    ? `<img src="${url}" alt="${escapeHtml(label)} flag" loading="lazy" referrerpolicy="no-referrer" />`
+    : '<span class="flag-fallback">🏳️</span>';
+}
+
+function inlineFlagMarkup(country, className = "stats-flag") {
+  return `<span class="flag ${className}">${flagMarkup(country)}</span>`;
 }
 
 function computePoints(score1, score2) {
@@ -527,12 +542,12 @@ function fixtureMarkup(match, variant = "full") {
       <div class="fixture-body">
         <p class="match-meta">${escapeHtml(match.city)} · ${escapeHtml(formatTorontoTime(match.kickoff))}</p>
         <div class="team-row">
-          <span class="flag">${toFlagEmoji(match.homeTeam)}</span>
+          <span class="flag">${flagMarkup(match.homeTeam)}</span>
           <input class="team-input" data-field="homeTeam" list="country-options" value="${escapeHtml(match.homeTeam)}" placeholder="Country 1" autocomplete="country-name" spellcheck="false" title="Enter the first country for this fixture" />
           <input class="score-input" data-field="homeScore" type="number" min="0" step="1" value="${escapeHtml(match.homeScore)}" placeholder="0" title="Enter the first country score" />
         </div>
         <div class="team-row">
-          <span class="flag">${toFlagEmoji(match.awayTeam)}</span>
+          <span class="flag">${flagMarkup(match.awayTeam)}</span>
           <input class="team-input" data-field="awayTeam" list="country-options" value="${escapeHtml(match.awayTeam)}" placeholder="Country 2" autocomplete="country-name" spellcheck="false" title="Enter the second country for this fixture" />
           <input class="score-input" data-field="awayScore" type="number" min="0" step="1" value="${escapeHtml(match.awayScore)}" placeholder="0" title="Enter the second country score" />
         </div>
@@ -716,7 +731,7 @@ function renderStatsOverview() {
         <div class="treemap-lite">
           ${attackLeaders.length ? attackLeaders.map((country) => `
             <div class="treemap-node" style="flex:${Math.max(1, country.goalsFor)}">
-              <span>${toFlagEmoji(country.name)} ${escapeHtml(country.name)}</span>
+              <span>${inlineFlagMarkup(country.name)}${escapeHtml(country.name)}</span>
               <strong>${country.goalsFor} GF</strong>
             </div>
           `).join("") : '<div class="empty-state">No goal data yet.</div>'}
@@ -728,7 +743,7 @@ function renderStatsOverview() {
         <div class="compare-bars">
           ${topComparison.length ? topComparison.map((country) => `
             <div class="compare-row">
-              <div class="compare-label">${toFlagEmoji(country.name)} ${escapeHtml(country.name)}</div>
+              <div class="compare-label">${inlineFlagMarkup(country.name)}${escapeHtml(country.name)}</div>
               <div class="compare-track">
                 <span class="compare-bar compare-points" style="width:${(country.points / maxPoints) * 100}%"></span>
                 <span class="compare-bar compare-against" style="width:${(country.goalsAgainst / maxGoalAgainst) * 100}%"></span>
@@ -760,7 +775,7 @@ function renderStatsOverview() {
       <div class="stats-match-grid compact-cards">
         ${attackLeaders.length ? attackLeaders.map((country) => `
           <article class="stats-card-item compact">
-            <strong>${toFlagEmoji(country.name)} ${escapeHtml(country.name)}</strong>
+            <strong>${inlineFlagMarkup(country.name)}${escapeHtml(country.name)}</strong>
             <div class="stats-scoreline small">
               <span>GF ${country.goalsFor}</span>
               <strong>${country.points} pts</strong>
@@ -782,7 +797,7 @@ function renderStatsOverview() {
           <tbody>
             ${countries.length ? countries.map((country) => `
               <tr>
-                <td>${toFlagEmoji(country.name)} ${escapeHtml(country.name)}</td>
+                <td>${inlineFlagMarkup(country.name)}${escapeHtml(country.name)}</td>
                 <td>${country.played}</td><td>${country.wins}</td><td>${country.draws}</td><td>${country.losses}</td>
                 <td>${country.goalsFor}</td><td>${country.goalsAgainst}</td><td><strong>${country.points}</strong></td>
               </tr>
@@ -800,9 +815,9 @@ function renderStatsOverview() {
             <strong>Match ${match.number} · ${escapeHtml(match.stage)}</strong>
             <small>${escapeHtml(match.city)} · ${escapeHtml(formatTorontoTime(match.kickoff))}</small>
             <div class="stats-scoreline small">
-              <span>${toFlagEmoji(match.homeTeam)} ${escapeHtml(match.homeTeam || "TBD")}</span>
+              <span>${inlineFlagMarkup(match.homeTeam)}${escapeHtml(match.homeTeam || "TBD")}</span>
               <strong>${escapeHtml(String(match.homeScore))} - ${escapeHtml(String(match.awayScore))}</strong>
-              <span>${toFlagEmoji(match.awayTeam)} ${escapeHtml(match.awayTeam || "TBD")}</span>
+              <span>${inlineFlagMarkup(match.awayTeam)}${escapeHtml(match.awayTeam || "TBD")}</span>
             </div>
           </article>
         `).join("") : '<div class="empty-state">No played matches yet.</div>'}
@@ -909,7 +924,7 @@ function handleInput(event) {
   if (!event.target.matches('.team-input')) return;
   const row = event.target.closest('.team-row');
   const flag = row?.querySelector('.flag');
-  if (flag) flag.textContent = toFlagEmoji(event.target.value);
+  if (flag) flag.innerHTML = flagMarkup(event.target.value);
 }
 
 function setHoveredMatch(matchId) {
