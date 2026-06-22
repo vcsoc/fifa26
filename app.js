@@ -517,6 +517,10 @@ function matchEspnEventsToMatches(events, candidateMatches) {
   return mapped;
 }
 
+function isFilterActive() {
+  return Boolean(elements.search.value.trim()) || elements.stage.value !== "all" || elements.status.value !== "all";
+}
+
 function filteredMatches() {
   const query = elements.search.value.trim().toLowerCase();
   const stage = elements.stage.value;
@@ -633,16 +637,20 @@ function fixtureMarkup(match, variant = "full") {
 }
 
 function renderGroups() {
+  const filtering = isFilterActive();
   const groupStage = matches.filter((match) => match.stage === "Group Stage");
-  const groups = GROUP_LABELS.map((label, index) => ({
-    label,
-    matches: groupStage.slice(index * 6, index * 6 + 6)
-  }));
+  const groups = GROUP_LABELS.map((label, index) => {
+    const groupMatches = groupStage.slice(index * 6, index * 6 + 6);
+    return {
+      label,
+      matches: filtering ? groupMatches.filter((match) => visibleMatchIds.has(match.id)) : groupMatches
+    };
+  });
 
   const renderGroup = (group) => `
-    <section class="group-card">
+    <section class="group-card${group.matches.length ? "" : " group-card-empty"}">
       <div class="group-card-header">Group ${group.label}</div>
-      <div class="group-matches">${group.matches.map((match, index) => `<div class="fixture-node group-node group-node-${index + 1}">${fixtureMarkup(match, "group")}</div>`).join("")}</div>
+      ${group.matches.length ? `<div class="group-matches">${group.matches.map((match, index) => `<div class="fixture-node group-node group-node-${index + 1}">${fixtureMarkup(match, "group")}</div>`).join("")}</div>` : ""}
     </section>
   `;
 
@@ -682,11 +690,6 @@ function renderKnockout() {
     </section>
 
     <section class="center-column">
-      <div class="third-place-wrap">
-        <div class="round-label orange">Third-place play-off</div>
-        ${thirdPlace ? fixtureMarkup(thirdPlace, "third") : ""}
-      </div>
-
       <div class="center-strip">
         <div class="round-label gray">Semifinals</div>
         <div class="semis-grid">
@@ -695,9 +698,18 @@ function renderKnockout() {
         </div>
       </div>
 
-      <div class="trophy-mark">🏆</div>
-      <div class="championship-label">Final</div>
-      ${finalMatch ? fixtureMarkup(finalMatch, "final") : ""}
+      <div class="final-path">
+        <div class="trophy-mark">🏆</div>
+        <div id="championship-match" class="championship-wrap">
+          <div class="championship-label">Final</div>
+          ${finalMatch ? fixtureMarkup(finalMatch, "final") : ""}
+        </div>
+      </div>
+
+      <div class="third-place-wrap third-place-lower">
+        <div class="round-label orange">Third-place play-off</div>
+        ${thirdPlace ? fixtureMarkup(thirdPlace, "third") : ""}
+      </div>
     </section>
 
     <section class="bracket-side right">
@@ -910,9 +922,12 @@ function renderSummary() {
   const visible = filteredMatches();
   const savedCount = matches.filter((match) => match.updatedManually).length;
   const autoCount = matches.filter((match) => match.autoUpdated && !match.updatedManually).length;
+  const filtering = isFilterActive();
   visibleMatchIds = new Set(visible.map((match) => match.id));
   upcomingMatchIds = getUpcomingMatchIds();
   activeMatchIds = getActiveMatchIds();
+  elements.body.classList.toggle("filters-active", filtering);
+  elements.scorecardView.classList.toggle("filters-active", filtering);
   elements.summary.textContent = `${visible.length}/${matches.length} fixtures · ${savedCount} saved · ${autoCount} auto synced`;
   if (elements.statTotal) elements.statTotal.textContent = String(matches.length);
   if (elements.statVisible) elements.statVisible.textContent = String(visible.length);
@@ -1311,14 +1326,14 @@ document.addEventListener('mouseover', (event) => {
   const fixture = event.target.closest('.fixture[data-match-id]');
   if (!fixture || fixture.contains(event.relatedTarget)) return;
   if (Date.now() < suppressFloatingUntil) return;
-  const matchId = fixture.dataset.matchId;
   const isSidePanel = Boolean(fixture.closest('#groups-left, #groups-right'));
-  const delay = isSidePanel ? 520 : 260;
+  if (!isSidePanel) return;
+  const matchId = fixture.dataset.matchId;
   if (hoverExpandTimer) clearTimeout(hoverExpandTimer);
   hoverExpandTimer = setTimeout(() => {
     setHoveredMatch(matchId);
     hoverExpandTimer = null;
-  }, delay);
+  }, 520);
 });
 document.addEventListener('mouseout', (event) => {
   const fixture = event.target.closest('.fixture[data-match-id]');

@@ -1,0 +1,9 @@
+node_modules/
+.pi/
+server.log
+tmp-*.js
+baseline-recovered.png
+current-layout*.png
+fixed-now*.png
+recovery-layout.png
+wide-layout.png
