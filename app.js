@@ -945,6 +945,7 @@ function render() {
   renderMatchJumps();
   elements.body.classList.toggle("stats-mode", statsMode);
   elements.statsToggle.textContent = statsMode ? "Scorecard view" : "Stats view";
+  requestAnimationFrame(syncSidePanelsWithTopbar);
 }
 
 function getFixtureValues(fixture) {
@@ -1223,6 +1224,29 @@ function toggleStatsMode() {
   render();
 }
 
+function syncSidePanelsWithTopbar() {
+  const columns = document.querySelectorAll('.groups-column');
+  if (statsMode || window.innerWidth <= 1220) {
+    columns.forEach((column) => {
+      column.style.transform = "";
+      column.style.height = "";
+    });
+    return;
+  }
+
+  const topbar = document.querySelector('.control-bar');
+  const desiredTop = Math.max(0, (topbar?.getBoundingClientRect().bottom ?? 0) + 8);
+  const desiredHeight = Math.max(160, window.innerHeight - desiredTop - 8);
+
+  columns.forEach((column) => {
+    column.style.transform = "";
+    const rect = column.getBoundingClientRect();
+    const offset = Math.max(0, desiredTop - rect.top);
+    column.style.transform = offset ? `translateY(${offset}px)` : "";
+    column.style.height = `${desiredHeight}px`;
+  });
+}
+
 function applyHeaderState() {
   const y = window.scrollY;
   if (!headerIsCompact && y > 80) {
@@ -1232,6 +1256,7 @@ function applyHeaderState() {
     headerIsCompact = false;
     elements.body.classList.remove("scrolled");
   }
+  syncSidePanelsWithTopbar();
 }
 
 function updateHeaderState() {
@@ -1316,6 +1341,7 @@ elements.export.addEventListener("click", exportChanges);
 elements.themeToggle.addEventListener("click", toggleTheme);
 elements.statsToggle.addEventListener("click", toggleStatsMode);
 window.addEventListener("scroll", updateHeaderState, { passive: true });
+window.addEventListener("resize", updateHeaderState, { passive: true });
 window.addEventListener("wheel", suppressFloatingPopouts, { passive: true });
 document.addEventListener("click", handleFixtureClick);
 document.addEventListener("click", handleJumpClick);
